@@ -1,0 +1,47 @@
+<!doctype html>
+<html lang="zh-Hant-TW">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>總測驗：10 題快問快答</title>
+<link rel="icon" href="data:image/svg+xml,%3Csvg xmlns=%22http://www.w3.org/2000/svg%22 viewBox=%220 0 100 100%22%3E%3Ctext y=%22.9em%22 font-size=%2290%22%3E%F0%9F%9B%A1%EF%B8%8F%3C/text%3E%3C/svg%3E">
+<link rel="stylesheet" href="assets/style.css">
+<script src="assets/common.js"></script>
+<script src="assets/urltools.js"></script>
+<script src="assets/quiz.js"></script>
+</head>
+<body data-unit="8">
+<main class="wrap">
+  <span class="tag">單元 08 · 總測驗</span>
+  <h1>10 題快問快答</h1>
+  <p class="lead">題目涵蓋今天的每個單元。作答完會看到成績和答錯題的複習。</p>
+  <div id="quiz"></div>
+</main>
+<script>
+const Q = [
+  { q: "下列哪一個「不是」釣魚簡訊的四個特徵？", options: ["來路不明的號碼", "短網址", "有錯字", "製造急迫"], answer: 2,
+    explain: "AI 寫的釣魚簡訊零錯字、語氣自然。四個特徵是：來路不明、短網址、製造急迫、要你行動。" },
+  { q: "這個網址真正的家（主網域）是哪一個？", code: "https://www.post.gov.tw.parcel-fee.top/pay", url: "https://www.post.gov.tw.parcel-fee.top/pay",
+    options: ["post.gov.tw", "gov.tw", "parcel-fee.top", "www.post.gov.tw"], answer: 2,
+    explain: "由右往左讀：最右邊是 .top，主網域是 parcel-fee.top，前面全是偽裝。" },
+  { q: "網址列出現鎖頭，代表什麼？", options: ["這是官方網站", "連線有加密", "網站沒有病毒", "經過政府認證"], answer: 1,
+    explain: "鎖頭只代表連線加密、別人偷聽不到。絕大多數釣魚網站也有鎖頭，不能用來判斷真假。" },
+  { q: "搜尋銀行時，第一個結果標著小小的「廣告」，最好的做法是？", options: ["點第一個最快", "從官方 App 進入，或自己輸入官網網址", "改點第二個結果", "有鎖頭就可以點"], answer: 1,
+    explain: "廣告版位可以被買下，排名第一不代表是官方。" },
+  { q: "用手機相機掃到 QR Code 後，第一件事是？", options: ["直接點開", "停在預覽畫面，先看網址", "轉傳給同事看", "截圖存起來"], answer: 1,
+    explain: "口訣：掃碼後先看網址，確定再點。" },
+  { q: "連上咖啡店的開放 Wi-Fi 時，哪件事最不該做？", options: ["看新聞", "網路銀行轉帳", "查地圖", "看影片"], answer: 1,
+    explain: "陌生開放 Wi-Fi 不處理公事和轉帳；必要時改用手機熱點。" },
+  { q: "手電筒 App 要求讀取你的通訊錄，你應該？", options: ["允許，反正大家都這樣", "拒絕：功能用不到就不給", "允許一次就好", "把通訊錄清空"], answer: 1,
+    explain: "權限給最小：這個功能用不到，就不要給。" },
+  { q: "下列哪一份資料可以直接貼給 AI？", options: ["客戶電話名單", "薪資表", "公開新聞稿", "含 API Key 的程式碼"], answer: 2,
+    explain: "公開資訊是綠燈；個資、機密、金鑰都是紅燈。" },
+  { q: "「主管」用新的 LINE 帳號要你傳手機驗證碼，正確做法是？", options: ["在同一個對話框問他是不是本人", "回撥他訊息裡給的電話", "用公司通訊錄上的號碼找本人確認", "先傳了再說"], answer: 2,
+    explain: "只有「你主動發起的第二管道」可信。同一個對話框和對方給的號碼都不算。" },
+  { q: "誤點釣魚連結後，「停、存、改、報」的第一步是？", options: ["停：停止操作、開飛航模式", "改：先去改密碼", "報：先打 165", "把簡訊刪掉"], answer: 0,
+    explain: "第零步永遠是「停」。簡訊不要刪，那是要「存」的證據。" },
+];
+Quiz.mount(document.getElementById("quiz"), Q, { shuffle: false });
+</script>
+</body>
+</html>

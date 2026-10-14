@@ -1,0 +1,84 @@
+<!doctype html>
+<html lang="zh-Hant-TW">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>情境桌遊：停、存、改、報</title>
+<link rel="icon" href="data:image/svg+xml,%3Csvg xmlns=%22http://www.w3.org/2000/svg%22 viewBox=%220 0 100 100%22%3E%3Ctext y=%22.9em%22 font-size=%2290%22%3E%F0%9F%9B%A1%EF%B8%8F%3C/text%3E%3C/svg%3E">
+<link rel="stylesheet" href="assets/style.css">
+<style>
+  .pickers { display: grid; grid-template-columns: repeat(3, 1fr); gap: 10px; }
+  .pickers button { min-height: 84px; flex-direction: column; gap: 2px; }
+  .pickers button b { font-size: 22px; }
+  .pickers button span { font-size: 13px; font-weight: 500; color: var(--muted); }
+  .pickers button.active { border-color: var(--accent); background: rgba(52,211,153,.12); }
+  .story { font-size: 19px; }
+  .ssgb { display: grid; gap: 10px; grid-template-columns: repeat(auto-fit, minmax(190px, 1fr)); margin-top: 12px; }
+  .ssgb .k { font-size: 34px; font-weight: 900; line-height: 1.1; }
+  .ssgb ul { margin: 6px 0 0; padding-left: 1.2em; }
+</style>
+<script src="assets/common.js"></script>
+</head>
+<body data-unit="7">
+<main class="wrap">
+  <span class="tag">單元 07 · 學員實作</span>
+  <h1>情境桌遊：停、存、改、報</h1>
+  <p class="lead">選你們這組的情境卡，討論應變步驟，派代表發表。先別看參考答案！</p>
+  <div class="pickers" id="pick"></div>
+  <div id="view" style="margin-top:16px"></div>
+</main>
+<script>
+const COLORS = { 停: "var(--u1)", 存: "var(--u3)", 改: "var(--u2)", 報: "var(--u7)" };
+const CASES = [
+  { id: "A", title: "誤點了釣魚連結",
+    story: "你收到「包裹地址不完整」的簡訊，順手點了連結，頁面要你輸入姓名、電話和信用卡號。你輸入到一半才覺得怪怪的。",
+    ask: ["第零步是什麼？", "已經輸入的資料，要怎麼補救？", "要通報誰？"],
+    ans: { 停: ["立刻關掉頁面，不要再輸入任何資料", "開飛航模式斷網"],
+           存: ["截圖簡訊、連結和填寫頁面", "原始簡訊不要刪"],
+           改: ["已輸入卡號：馬上打給發卡銀行停卡", "有輸入任何密碼就立刻修改"],
+           報: ["通報公司資安窗口", "撥 165；簡訊用「回報垃圾訊息」檢舉"] } },
+  { id: "B", title: "帳號出現異地登入通知",
+    story: "早上收到通知：「你的帳號在越南登入」。通知裡有一個「不是我，立即保護帳號」的按鈕。",
+    ask: ["那個按鈕可以按嗎？", "要從哪裡改密碼？", "除了密碼還要檢查什麼？"],
+    ans: { 停: ["不要按通知裡的按鈕或連結，通知本身也可能是釣魚", "自己打開官方 App 或官網查看"],
+           存: ["截圖通知、登入時間和地點"],
+           改: ["從官方 App 修改密碼", "登出所有裝置、開啟 MFA", "檢查復原信箱、手機與郵件轉寄規則有沒有被改"],
+           報: ["公司帳號：馬上通報資安窗口", "同一組密碼用在別處的，也要一起改"] } },
+  { id: "C", title: "AI 假冒主管要求匯款",
+    story: "「主管」打電話來，聲音一模一樣，說客戶急著要一筆訂金，要你先匯 20 萬，簽呈之後補。",
+    ask: ["聲音一樣就能相信嗎？", "怎麼確認是不是主管本人？", "如果已經匯了怎麼辦？"],
+    ans: { 停: ["不匯款，掛掉電話", "不用對方給的號碼回撥"],
+           存: ["保留通話紀錄、對方號碼、帳戶資訊", "有錄音或訊息都留著"],
+           改: ["若已提供密碼或驗證碼，立即修改密碼", "若已匯款：馬上撥 165 並聯絡銀行，請求將帳戶列為警示"],
+           報: ["用公司通訊錄上的號碼找主管本人確認", "通報資安窗口與財務單位"] } },
+];
+let cur = null, reveal = false;
+const pick = document.getElementById("pick"), view = document.getElementById("view");
+for (const c of CASES) {
+  pick.append(App.el("button", { class: "btn", type: "button", "data-id": c.id,
+    onclick: () => { cur = c; reveal = false; render(); } }, App.el("b", {}, "情境 " + c.id), App.el("span", {}, c.title)));
+}
+function render() {
+  pick.querySelectorAll("button").forEach(b => b.classList.toggle("active", cur && b.dataset.id === cur.id));
+  view.innerHTML = "";
+  if (!cur) return;
+  view.append(App.el("div", { class: "card" },
+    App.el("h3", {}, "情境 " + cur.id + "：" + cur.title),
+    App.el("p", { class: "story" }, cur.story),
+    App.el("div", { class: "muted" }, "討論題："), App.el("ol", { class: "steps" }, cur.ask.map(a => App.el("li", {}, a)))));
+  if (!reveal) {
+    view.append(App.el("button", { class: "btn primary", type: "button", onclick: () => { reveal = true; render(); } }, "看參考答案"));
+    return;
+  }
+  const g = App.el("div", { class: "ssgb" });
+  for (const k of ["停", "存", "改", "報"]) {
+    g.append(App.el("div", { class: "card", style: "margin:0;border-color:" + COLORS[k] },
+      App.el("div", { class: "k", style: "color:" + COLORS[k] }, k),
+      App.el("ul", {}, cur.ans[k].map(x => App.el("li", {}, x)))));
+  }
+  view.append(App.el("h2", {}, "參考答案"), g,
+    App.el("div", { class: "card accent", style: "margin-top:14px" }, "第零步永遠是「停」：先停下來，再想下一步。"));
+}
+</script>
+</body>
+</html>

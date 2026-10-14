@@ -1,0 +1,96 @@
+<!doctype html>
+<html lang="zh-Hant-TW">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>第二管道演練</title>
+<link rel="icon" href="data:image/svg+xml,%3Csvg xmlns=%22http://www.w3.org/2000/svg%22 viewBox=%220 0 100 100%22%3E%3Ctext y=%22.9em%22 font-size=%2290%22%3E%F0%9F%9B%A1%EF%B8%8F%3C/text%3E%3C/svg%3E">
+<link rel="stylesheet" href="assets/style.css">
+<style>
+  .roles { display: grid; grid-template-columns: 1fr 1fr; gap: 10px; }
+  .roles button { min-height: 64px; font-size: 18px; }
+  .roles button.active { background: var(--accent); border-color: var(--accent); color: #0b1220; }
+  .script { background: #26324d; border-radius: 18px 18px 18px 6px; padding: 12px 14px; margin: 8px 0; font-size: 18px; }
+  .who { color: var(--muted); font-size: 14px; }
+  label.chk { display: flex; gap: 12px; align-items: flex-start; padding: 12px 14px; border: 1.5px solid var(--line); border-radius: 12px; margin: 8px 0; background: var(--card); cursor: pointer; }
+  label.chk input { width: 22px; height: 22px; margin-top: 3px; accent-color: var(--ok); flex: 0 0 22px; }
+  label.chk.done { border-color: var(--ok); }
+</style>
+<script src="assets/common.js"></script>
+</head>
+<body data-unit="6">
+<main class="wrap">
+  <span class="tag">單元 06 · 學員實作</span>
+  <h1>第二管道演練</h1>
+  <p class="lead">兩人一組：一人扮「傳急件的主管」，一人拿起手機演出完整的確認流程。演完交換角色。</p>
+
+  <div class="roles">
+    <button class="btn" type="button" data-role="boss">我扮「主管」</button>
+    <button class="btn" type="button" data-role="staff">我是員工</button>
+  </div>
+  <div id="view" style="margin-top:16px"></div>
+
+  <div class="card accent" style="margin-top:24px">
+    <h3>講師點評只看一件事</h3>
+    <p style="margin:0">有沒有用<b>「你主動發起的第二管道」</b>確認？對方給的電話、同一個對話框、對方傳來的連結，都不算第二管道。聲音、文字、頭貼都可以造假。</p>
+  </div>
+</main>
+<script>
+const CASES = [
+  { title: "匯款", lines: [
+      "我在開會不方便講電話，客戶那邊很急。",
+      "你先幫我匯 8 萬到這個帳戶，我晚點再補簽呈。",
+      "（對方追問時）老闆在等，你不要再拖了！" ],
+    trap: "要你「先做、後補程序」，還用職權施壓。" },
+  { title: "傳客戶資料", lines: [
+      "我手機壞了換新的 LINE，這是新帳號。",
+      "把上個月的客戶名單 Excel 傳給我，我要跟廠商開會用。",
+      "（對方猶豫時）有問題我負責，快一點。" ],
+    trap: "「換新帳號」是最常見的開場，資料一傳出去就收不回來。" },
+  { title: "提供驗證碼", lines: [
+      "我在幫你把帳號加進新的專案群組。",
+      "你手機等一下會收到一組 6 位數驗證碼，傳給我就好。",
+      "（對方問為什麼時）系統規定的，大家都有傳。" ],
+    trap: "驗證碼就是你帳號的鑰匙，任何人跟你要都是詐騙。" },
+];
+const STEPS = [
+  "不要照做，也不要回覆對方「好」",
+  "不要回撥對方給的號碼，也不要在同一個對話框裡問",
+  "用公司通訊錄上的號碼回撥，或直接當面確認",
+  "有疑慮就通報公司資安窗口（不必等到確認是詐騙）",
+];
+const view = document.getElementById("view");
+let role = null, caseIdx = Math.floor(Math.random() * CASES.length), done = new Set();
+
+function render() {
+  document.querySelectorAll("[data-role]").forEach(b => b.classList.toggle("active", b.dataset.role === role));
+  view.innerHTML = "";
+  if (!role) { view.append(App.el("p", { class: "muted" }, "先選你的角色。")); return; }
+  if (role === "boss") {
+    const c = CASES[caseIdx];
+    view.append(App.el("div", { class: "card" },
+      App.el("div", { class: "who" }, "你的題目（不要給隊友看）"),
+      App.el("h3", {}, "情境：要對方「" + c.title + "」"),
+      c.lines.map(l => App.el("div", { class: "script" }, l)),
+      App.el("p", { class: "muted small", style: "margin:10px 0 0" }, "詐騙手法重點：" + c.trap)));
+    view.append(App.el("div", { class: "row" },
+      App.el("button", { class: "btn", type: "button", onclick: () => { caseIdx = (caseIdx + 1) % CASES.length; render(); } }, "換一題"),
+      App.el("span", { class: "muted small" }, "三種題目：匯款／傳資料／提供驗證碼")));
+  } else {
+    view.append(App.el("p", { class: "muted" }, "主管傳訊來了。實際拿起手機，每做完一步就打勾："));
+    STEPS.forEach((s, i) => {
+      const box = App.el("input", { type: "checkbox" });
+      box.checked = done.has(i);
+      const lab = App.el("label", { class: "chk" + (done.has(i) ? " done" : "") }, box, App.el("span", {}, (i + 1) + "．" + s));
+      box.addEventListener("change", () => { box.checked ? done.add(i) : done.delete(i); render(); });
+      view.append(lab);
+    });
+    if (done.size === STEPS.length) view.append(App.el("div", { class: "card accent" }, "✅ 完整走完！現在跟隊友交換角色。"));
+    view.append(App.el("button", { class: "btn ghost", type: "button", onclick: () => { done.clear(); render(); } }, "清除重來"));
+  }
+}
+document.querySelectorAll("[data-role]").forEach(b => b.addEventListener("click", () => { role = b.dataset.role; render(); }));
+render();
+</script>
+</body>
+</html>

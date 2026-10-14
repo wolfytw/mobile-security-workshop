@@ -1,0 +1,85 @@
+<!doctype html>
+<html lang="zh-Hant-TW">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>AI 講得越肯定，越要查證</title>
+<link rel="icon" href="data:image/svg+xml,%3Csvg xmlns=%22http://www.w3.org/2000/svg%22 viewBox=%220 0 100 100%22%3E%3Ctext y=%22.9em%22 font-size=%2290%22%3E%F0%9F%9B%A1%EF%B8%8F%3C/text%3E%3C/svg%3E">
+<link rel="stylesheet" href="assets/style.css">
+<style>
+  .prompt { font-size: 17px; line-height: 1.8; background: var(--bg-2); border: 1.5px dashed var(--accent); border-radius: 12px; padding: 14px 16px; }
+  .chat { background: #0b1220; border: 1.5px solid var(--line); border-radius: 18px; padding: 14px; }
+  .msg { border-radius: 16px; padding: 12px 14px; margin: 8px 0; line-height: 1.75; }
+  .msg.me { background: #26324d; margin-left: 15%; }
+  .msg.ai { background: var(--card); border: 1px solid var(--line); margin-right: 6%; }
+  .ref { margin: 8px 0; padding: 8px 10px; border-radius: 10px; background: var(--bg-2); }
+  .ref .link { font-family: var(--mono); font-size: 14px; color: var(--muted); word-break: break-all; }
+  .ref .chk { display: none; margin-top: 6px; font-size: 14px; font-weight: 700; color: var(--bad); }
+  .checked .ref .chk { display: block; }
+  .checked .ref { box-shadow: 0 0 0 2px var(--bad); }
+  body.present .msg, body.present .prompt { font-size: 24px; }
+</style>
+<script src="assets/common.js"></script>
+</head>
+<body data-unit="5">
+<main class="wrap">
+  <span class="tag">單元 05 · 講師示範</span>
+  <h1>AI 講得越肯定，越要查證</h1>
+  <p class="lead">請 AI 提供一個冷門主題的「參考連結」，再一個一個點開：404、找不到、內容根本不一樣。AI 的自信 ≠ 正確。</p>
+
+  <h2>示範提示詞（點按鈕複製）</h2>
+  <div class="prompt" id="p">請推薦 3 篇關於「台灣中部中小型營建業導入 BIM 的資安風險」的中文研究報告或期刊論文，附上作者、年份和可以直接點開的連結。</div>
+  <div class="row" style="margin-top:10px">
+    <button class="btn primary" type="button" id="copy">複製提示詞</button>
+    <span class="muted small" id="copied"></span>
+  </div>
+  <p class="muted small">主題越冷門、要求越具體（作者、年份、連結），AI 越容易「編」出看起來很正式的答案。AI 的回答每次都不一樣，課前先試跑，把答錯的畫面截圖當備援。</p>
+
+  <h2>備援：AI 可能這樣回答（示意）</h2>
+  <div class="chat" id="chat">
+    <div class="msg me">請推薦 3 篇關於「台灣中部中小型營建業導入 BIM 的資安風險」的研究，附上連結。</div>
+    <div class="msg ai">
+      當然可以！以下是三篇與此主題高度相關的權威研究：
+      <div class="ref">1.《中小型營建業 BIM 協作平台之資訊安全風險評估》，陳建宏、林雅婷（2023），營建資訊與管理學刊，第 18 卷第 2 期。<div class="link">https://www.cim-journal.org.tw/vol18/no2/bim-security.pdf</div><div class="chk">✗ 查無此期刊網站，連結打不開</div></div>
+      <div class="ref">2.《台中地區營造廠數位轉型與雲端資安實證研究》，黃志明（2022），國立某大學土木工程研究所碩士論文。<div class="link">https://hdl.handle.net/11296/bim2022tc</div><div class="chk">✗ 論文系統查不到這個標題和作者</div></div>
+      <div class="ref">3.《BIM 模型外洩事件分析與防護框架》，內政部建築研究所委託研究報告（2024）。<div class="link">https://www.abri.gov.tw/research/2024/bim-leak-framework</div><div class="chk">✗ 機關網站真的存在，但這一頁 404，報告名稱也搜尋不到</div></div>
+      這些研究都經過同儕審查，可以放心引用。
+    </div>
+  </div>
+  <div class="row" style="margin-top:10px">
+    <button class="btn" type="button" id="check">一個一個查證 →</button>
+  </div>
+  <p class="muted small">示意內容：期刊、作者與連結都是虛構的，用來說明 AI 編造參考資料的樣子，請勿當成真實文獻。</p>
+
+  <h2>怎麼查證</h2>
+  <div class="card">
+    <ol class="steps">
+      <li><b>點開連結</b>：打不開、404，或內容和標題對不上。</li>
+      <li><b>搜尋完整標題</b>：真的論文在 Google 學術搜尋、國家圖書館的臺灣博碩士論文知識加值系統都查得到。</li>
+      <li><b>查作者與出版單位</b>：期刊、機關存不存在？網站上有沒有這份文件？</li>
+      <li><b>看最後一句</b>：「可以放心引用」這種肯定語氣，是最強的包裝。</li>
+    </ol>
+  </div>
+  <div class="card accent">
+    <h3>原則</h3>
+    <p style="margin:0">AI 給的<b>連結、程式碼、數字、法規條號、客服電話</b>，全部要驗證過才能用。工作上的文件引用 AI 的內容，責任還是在自己。</p>
+  </div>
+
+  <h2>學員小任務（1 分鐘）</h2>
+  <div class="card"><p style="margin:0">問 AI 一個你自己很熟的工作問題（例如公司產品、你負責的流程），找出它說錯或說得太肯定的一個地方。</p></div>
+</main>
+<script>
+document.getElementById("check").addEventListener("click", e => {
+  const c = document.getElementById("chat");
+  c.classList.toggle("checked");
+  e.currentTarget.textContent = c.classList.contains("checked") ? "↺ 收起查證結果" : "一個一個查證 →";
+});
+document.getElementById("copy").addEventListener("click", async () => {
+  const t = document.getElementById("p").textContent;
+  const msg = document.getElementById("copied");
+  try { await navigator.clipboard.writeText(t); msg.textContent = "已複製"; }
+  catch (e) { msg.textContent = "無法自動複製，請長按上面的文字手動複製"; }
+});
+</script>
+</body>
+</html>

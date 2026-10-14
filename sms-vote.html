@@ -1,0 +1,176 @@
+<!doctype html>
+<html lang="zh-Hant-TW">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>訊息真假投票</title>
+<link rel="icon" href="data:image/svg+xml,%3Csvg xmlns=%22http://www.w3.org/2000/svg%22 viewBox=%220 0 100 100%22%3E%3Ctext y=%22.9em%22 font-size=%2290%22%3E%F0%9F%9B%A1%EF%B8%8F%3C/text%3E%3C/svg%3E">
+<link rel="stylesheet" href="assets/style.css">
+<style>
+  .phone { background: #0b1220; border: 1.5px solid var(--line); border-radius: 22px; padding: 14px; max-width: 560px; }
+  .sender { font-family: var(--mono); color: var(--muted); font-size: 15px; margin-bottom: 8px; display: flex; justify-content: space-between; gap: 8px; }
+  .bubble { background: #26324d; border-radius: 18px 18px 18px 6px; padding: 12px 14px; font-size: 18px; line-height: 1.75; }
+  .x { border-radius: 6px; padding: 0 2px; transition: background .2s ease, box-shadow .2s ease; }
+  .reveal .x-from { background: rgba(248,113,113,.25); color: #fecaca; box-shadow: 0 0 0 2px #f87171; }
+  .reveal .x-link { background: rgba(251,146,60,.25); color: #fed7aa; box-shadow: 0 0 0 2px #fb923c; }
+  .reveal .x-urgent { background: rgba(251,191,36,.25); color: #fde68a; box-shadow: 0 0 0 2px #fbbf24; }
+  .reveal .x-act { background: rgba(34,211,238,.25); color: #a5f3fc; box-shadow: 0 0 0 2px #22d3ee; }
+  .reveal .x-ok { background: rgba(52,211,153,.2); color: #bbf7d0; box-shadow: 0 0 0 2px #34d399; }
+  .reveal .x-ai { background: rgba(167,139,250,.25); color: #ddd6fe; box-shadow: 0 0 0 2px #a78bfa; }
+  .vote { display: grid; grid-template-columns: 1fr 1fr; gap: 12px; margin-top: 16px; max-width: 560px; }
+  .vote .btn { min-height: 64px; font-size: 20px; }
+  .vote .btn.right { border-color: var(--ok); background: rgba(52,211,153,.18); }
+  .vote .btn.wrong { border-color: var(--bad); background: rgba(248,113,113,.18); }
+  .badge { display: inline-block; padding: 2px 12px; border-radius: 999px; font-weight: 800; font-size: 15px; margin-left: 6px; }
+  .badge.ai { background: #a78bfa; color: #0b1220; }
+  .legend span { display: inline-block; font-size: 14px; padding: 1px 8px; border-radius: 6px; margin: 2px 4px 2px 0; }
+  .score { font-size: 56px; font-weight: 900; color: var(--accent); line-height: 1; }
+  .board { display: grid; grid-template-columns: repeat(auto-fill, minmax(150px, 1fr)); gap: 10px; }
+  .board .card { margin: 0; text-align: center; }
+  .board .pts { font-size: 40px; font-weight: 900; color: var(--accent); line-height: 1.1; }
+  body.present .bubble { font-size: 28px; }
+  body.present .sender { font-size: 20px; }
+  body.present .phone, body.present .vote { max-width: 900px; }
+</style>
+<script src="assets/common.js"></script>
+</head>
+<body data-unit="1">
+<main class="wrap">
+  <span class="tag">單元 01 · 學員實作</span>
+  <h1>訊息真假投票</h1>
+  <p class="lead">4 則訊息：2 則真、2 則假，其中 1 則是 AI 寫的。看完每一則，先判斷「真的」還是「假的」，再看講師拆解。</p>
+  <div id="stage"></div>
+  <p class="muted small" style="margin-top:24px">範例訊息為教學改寫，銀行與人名皆為虛構。講師投影時在網址後面加 <kbd>?present=1</kbd>：字體放大，改為「揭曉答案」按鈕，最後顯示組別計分板。</p>
+</main>
+<script>
+// 要換題目，直接改這個陣列。x-from 來路不明、x-link 連結、x-urgent 急迫、x-act 要你行動、x-ok 可信的地方、x-ai AI 痕跡
+const MSGS = [
+  { from: "星辰銀行", time: "今天 12:05", real: true,
+    html: '【星辰銀行】您的信用卡末四碼 1234 於 10/14 12:03 消費 NT$1,280。<span class="x x-ok">如非本人交易，請撥打卡片背面客服專線。</span>',
+    why: ["只是通知，<b>沒有任何連結</b>。", "請你打「卡片背面」的電話：是<b>你自己知道的管道</b>，不是訊息裡給的號碼。", "沒有威脅、沒有倒數。"],
+    tip: "就算是真的，有疑問也是自己翻卡片背面打電話，不要回撥簡訊裡的號碼。" },
+  { from: "+855 97 XXX XXXX", time: "今天 09:41", real: false, fromBad: true,
+    html: '您的會員點數 3,280 點<span class="x x-urgent">將於今日 23:59 到期，逾期作廢！</span><span class="x x-act">立即兌換好禮</span>：<span class="x x-link">reurl.cc/Ab12Cd</span>',
+    why: ["<b>來路不明</b>：+855 是柬埔寨門號。", "<b>短網址</b>：reurl.cc 看不出真正要去哪裡。", "<b>製造急迫</b>：今日到期、逾期作廢。", "<b>要你行動</b>：立即點連結兌換。"],
+    tip: "四個特徵全中。點數真的要到期，就自己打開官方 App 看。" },
+  { from: "111", time: "昨天 10:20", real: true,
+    html: '【公路局】提醒您，車號 ABC-1234 汽車定期檢驗將於 11/15 到期，<span class="x x-ok">請於期限內至各監理所站或代檢廠辦理。</span>',
+    why: ["寄件者是 <b>111</b>：政府機關專屬的簡訊短碼。", "<b>沒有連結</b>，也沒有要你付款或輸入資料。", "請你<b>自己到官方管道</b>辦理。"],
+    tip: "要注意：假冒者也會在內文寫「公路局」「監理站」。看寄件者是不是 111，而且照樣不點來路不明的連結。" },
+  { from: "+886 978 312 XXX", time: "今晚 21:52", real: false, fromBad: true,
+    html: '<span class="x x-ai">王小姐您好，我是星辰銀行客戶關懷專員林怡君。</span>系統偵測到您的帳戶於今晚 21:47 出現一筆<span class="x x-ai">異地登入紀錄（新加坡）</span>。為保障您的資產安全，<span class="x x-urgent">請於 30 分鐘內</span><span class="x x-act">完成身分驗證</span>：<span class="x x-link">star-bank.secure-verify.top</span>。<span class="x x-ai">造成您的不便，敬請見諒，感謝您的配合。</span>',
+    why: ["<b>來路不明</b>：一般手機號碼，不是銀行的名稱或短碼。", "<b>連結</b>：由右往左讀，真正的家是 <span class=\"mono\">secure-verify.top</span>，star-bank 只是偽裝。", "<b>製造急迫</b>：30 分鐘內。", "<b>要你行動</b>：點連結完成身分驗證。"],
+    ai: true,
+    aiWhy: ["叫得出你的名字，還有「專員姓名」。", "時間、地點等細節很具體，越細越像真的。", "零錯字、語氣禮貌，還會道歉。"],
+    tip: "這則是用 AI 寫的。破綻不在文字，而在那四個特徵：AI 把文字寫得再好，網址和要求還是騙不了人。" },
+];
+
+const present = new URLSearchParams(location.search).get("present") === "1";
+const stage = document.getElementById("stage");
+let i = 0, score = 0;
+const el = App.el;
+
+function legend() {
+  return el("div", { class: "legend small", style: "margin-top:10px" },
+    el("span", { style: "box-shadow:0 0 0 2px #f87171" }, "來路不明"),
+    el("span", { style: "box-shadow:0 0 0 2px #fb923c" }, "連結"),
+    el("span", { style: "box-shadow:0 0 0 2px #fbbf24" }, "製造急迫"),
+    el("span", { style: "box-shadow:0 0 0 2px #22d3ee" }, "要你行動"),
+    el("span", { style: "box-shadow:0 0 0 2px #34d399" }, "可信的地方"),
+    el("span", { style: "box-shadow:0 0 0 2px #a78bfa" }, "AI 痕跡"));
+}
+
+function show() {
+  stage.innerHTML = "";
+  if (i >= MSGS.length) return finish();
+  const m = MSGS[i];
+  stage.append(el("div", { class: "row", style: "justify-content:space-between;margin-bottom:8px" },
+    el("b", {}, "第 " + (i + 1) + " / " + MSGS.length + " 則"), present ? "" : el("span", { class: "muted" }, "答對 " + score)));
+  stage.append(el("div", { class: "progress", style: "margin-bottom:14px" }, el("div", { style: "width:" + (i / MSGS.length * 100) + "%" })));
+  const phone = el("div", { class: "phone" },
+    el("div", { class: "sender" }, el("span", { class: m.fromBad ? "x x-from" : (m.real ? "x x-ok" : "") }, "寄件者：" + m.from), el("span", {}, m.time)),
+    el("div", { class: "bubble", html: m.html }));
+  stage.append(phone);
+  const fb = el("div", {});
+  const vote = el("div", { class: "vote" });
+  const reveal = (pick) => {
+    if (vote.dataset.done) return;
+    vote.dataset.done = "1";
+    phone.classList.add("reveal");
+    if (pick != null) {
+      const ok = pick === m.real;
+      if (ok) score++;
+      [...vote.children].forEach(b => {
+        const isReal = b.dataset.v === "1";
+        if (isReal === m.real) b.classList.add("right"); else if (isReal === pick) b.classList.add("wrong");
+        b.disabled = true;
+      });
+      fb.append(el("p", { class: "verdict " + (ok ? "ok" : "bad"), style: "font-size:20px;margin:14px 0 4px" }, ok ? "✅ 答對了！" : "❌ 再看一次破綻"));
+    } else {
+      vote.remove();
+    }
+    const head = el("h2", { style: "margin-top:14px" }, m.real ? "✅ 這則是真的" : "❌ 這則是假的");
+    if (m.ai) head.append(el("span", { class: "badge ai" }, "🤖 AI 生成"));
+    fb.append(head);
+    fb.append(el("div", { class: "card" }, el("ul", { style: "margin:0;padding-left:1.2em" }, m.why.map(w => el("li", { html: w })))));
+    if (m.aiWhy) fb.append(el("div", { class: "card", style: "border-color:#a78bfa" },
+      el("h3", {}, "為什麼看起來這麼像真的？"),
+      el("ul", { style: "margin:0;padding-left:1.2em" }, m.aiWhy.map(w => el("li", {}, w)))));
+    fb.append(el("p", { class: "muted" }, "💡 " + m.tip));
+    fb.append(legend());
+    fb.append(el("div", { class: "row end", style: "margin-top:14px" },
+      el("button", { class: "btn primary", type: "button", onclick: () => { i++; show(); window.scrollTo({ top: 0 }); } },
+        i + 1 < MSGS.length ? "下一則 →" : "看結果")));
+  };
+  if (present) {
+    vote.append(el("button", { class: "btn primary", type: "button", style: "grid-column:span 2", onclick: () => reveal(null) }, "大家投完了 → 揭曉答案"));
+  } else {
+    vote.append(el("button", { class: "btn", type: "button", "data-v": "1", onclick: () => reveal(true) }, "✅ 真的"));
+    vote.append(el("button", { class: "btn", type: "button", "data-v": "0", onclick: () => reveal(false) }, "❌ 假的"));
+  }
+  stage.append(vote, fb);
+}
+
+function finish() {
+  if (!present) {
+    stage.append(el("div", { class: "card accent center" },
+      el("div", { class: "muted" }, "你的成績"),
+      el("div", { class: "score" }, score + " / " + MSGS.length),
+      el("p", {}, score === MSGS.length ? "全對！把答對人數告訴你的組長。" : "錯的那幾則，就是今天最值得記住的破綻。")));
+  }
+  stage.append(el("div", { class: "card" },
+    el("h3", {}, "今天的結論"),
+    el("p", { style: "margin:0" }, "AI 讓假訊息零錯字、有禮貌、叫得出你的名字。別再靠「通不通順」判斷，改看四個特徵：來路不明、連結、製造急迫、要你行動。")));
+  if (present) board();
+  stage.append(el("div", { class: "row", style: "margin-top:12px" },
+    el("button", { class: "btn ghost", type: "button", onclick: () => { i = 0; score = 0; show(); } }, "↺ 重新開始")));
+}
+
+// 講師用組別計分板（只存在投影這台電腦的瀏覽器）
+function board() {
+  const KEY = "smsvote-groups";
+  let g = App.load(KEY, [0, 0, 0, 0, 0, 0]);
+  const wrap = el("div", {});
+  const draw = () => {
+    wrap.innerHTML = "";
+    wrap.append(el("h2", {}, "組別計分板"));
+    const b = el("div", { class: "board" });
+    g.forEach((v, k) => b.append(el("div", { class: "card" },
+      el("div", { class: "muted" }, "第 " + (k + 1) + " 組"),
+      el("div", { class: "pts" }, v),
+      el("div", { class: "row", style: "justify-content:center" },
+        el("button", { class: "btn", type: "button", onclick: () => { g[k] = Math.max(0, v - 1); App.save(KEY, g); draw(); } }, "−"),
+        el("button", { class: "btn primary", type: "button", onclick: () => { g[k] = v + 1; App.save(KEY, g); draw(); } }, "+1")))));
+    wrap.append(b);
+    wrap.append(el("div", { class: "row", style: "margin-top:10px" },
+      el("button", { class: "btn ghost", type: "button", onclick: () => { g.push(0); App.save(KEY, g); draw(); } }, "＋ 增加一組"),
+      el("button", { class: "btn ghost", type: "button", onclick: () => { g = g.map(() => 0); App.save(KEY, g); draw(); } }, "分數歸零")));
+  };
+  draw();
+  stage.append(wrap);
+}
+
+show();
+</script>
+</body>
+</html>

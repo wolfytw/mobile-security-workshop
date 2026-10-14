@@ -1,0 +1,136 @@
+<!doctype html>
+<html lang="zh-Hant-TW">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>手機安全設定檢核清單</title>
+<link rel="icon" href="data:image/svg+xml,%3Csvg xmlns=%22http://www.w3.org/2000/svg%22 viewBox=%220 0 100 100%22%3E%3Ctext y=%22.9em%22 font-size=%2290%22%3E%F0%9F%9B%A1%EF%B8%8F%3C/text%3E%3C/svg%3E">
+<link rel="stylesheet" href="assets/style.css">
+<style>
+  .plat { display: grid; grid-template-columns: 1fr 1fr; gap: 8px; position: sticky; top: 52px; z-index: 5; background: var(--bg); padding: 8px 0; }
+  .plat button.active { background: var(--accent); border-color: var(--accent); color: #0b1220; }
+  section.sec { scroll-margin-top: 120px; }
+  .sec-h { display: flex; align-items: baseline; gap: 10px; margin: 28px 0 4px; }
+  .sec-h .u { font-weight: 900; color: var(--c); }
+  .sec-h h2 { margin: 0; }
+  label.item { display: flex; gap: 12px; align-items: flex-start; padding: 12px 14px; border: 1.5px solid var(--line); border-radius: 12px; margin: 8px 0; background: var(--card); cursor: pointer; }
+  label.item input { width: 22px; height: 22px; margin-top: 3px; accent-color: var(--ok); flex: 0 0 22px; }
+  label.item.done { border-color: var(--ok); }
+  label.item.done .t { color: var(--muted); }
+  .path { display: block; font-family: var(--font); color: var(--muted); font-size: 15px; margin-top: 2px; }
+  .sum { display: flex; align-items: center; gap: 12px; }
+  .sum .progress { flex: 1; }
+</style>
+<script src="assets/common.js"></script>
+</head>
+<body data-unit="4">
+<main class="wrap">
+  <span class="tag">跟著做</span>
+  <h1>手機安全設定檢核清單</h1>
+  <p class="lead">上課時跟著講師一起設定，每完成一項就打勾。打勾紀錄只存在你自己的手機上。</p>
+  <div class="sum"><div class="progress"><div id="bar"></div></div><b id="pct">0%</b></div>
+  <div class="plat" role="group" aria-label="選擇手機系統">
+    <button class="btn" type="button" data-p="ios">iPhone</button>
+    <button class="btn" type="button" data-p="android">Android</button>
+  </div>
+  <div id="list"></div>
+  <p class="muted small" style="margin-top:24px">手機系統和 App 改版後，選項名稱可能略有不同；Android 各品牌的路徑也不一樣，找不到時可以在「設定」最上方的搜尋欄輸入關鍵字。</p>
+</main>
+<script>
+// 每一項：t = 要做什麼；ios / android = 路徑（兩者相同時用 both）
+const SECTIONS = [
+  { id: "wifi", unit: "03", c: "--u3", title: "關掉 Wi-Fi 自動連線", why: "駭客只要架一個跟咖啡店同名的熱點，手機就可能自己連上去。", items: [
+    { id: "wifi-saved", t: "已儲存的開放網路，關掉自動連線",
+      ios: "設定 → Wi-Fi → 點開放網路旁的 ⓘ → 關閉「自動加入」，或按「忘記此網路」",
+      android: "設定 → 網路和網際網路 → 網際網路 → 點已儲存的開放網路 → 關閉「自動連線」或刪除" },
+    { id: "wifi-public", t: "不要自動連上新的公用網路",
+      ios: "設定 → Wi-Fi →「自動加入熱點」改為「詢問加入」",
+      android: "設定 → 網路和網際網路 → 網際網路 → 網路偏好設定 → 關閉「連線至公用網路」" },
+    { id: "wifi-rule", t: "記住：陌生開放 Wi-Fi 不處理公事和轉帳，必要時用手機熱點", both: "" },
+  ]},
+  { id: "perm", unit: "04", c: "--u4", title: "App 權限健檢", why: "這個功能用不到，就不要給。", items: [
+    { id: "perm-loc", t: "定位：揪出「永遠／一律允許」的 App",
+      ios: "設定 → 隱私權與安全性 → 定位服務 → 改成「使用 App 期間」或「永不」",
+      android: "設定 → 安全性與隱私權 → 隱私權 → 權限管理員 → 位置資訊 → 改成「僅在使用該應用程式時允許」" },
+    { id: "perm-cam", t: "相機、麥克風：收回用不到的 App",
+      ios: "設定 → 隱私權與安全性 → 相機／麥克風 → 關掉不需要的 App",
+      android: "權限管理員 → 相機／麥克風 → 改成「不允許」" },
+    { id: "perm-photo", t: "照片：不要給「完整取用」",
+      ios: "設定 → 隱私權與安全性 → 照片 → 改成「受限制的取用」或「無」",
+      android: "權限管理員 → 相片和影片 → 改成「一律詢問」或「不允許」" },
+    { id: "perm-notify", t: "鎖定畫面不要顯示訊息內容（避免驗證碼被瞄到）",
+      ios: "設定 → 通知 → 顯示預覽 → 改成「解鎖時」",
+      android: "設定 → 通知 → 鎖定畫面上的通知 → 選擇隱藏敏感內容" },
+  ]},
+  { id: "ai", unit: "05", c: "--u5", title: "關掉 AI 拿你的對話去訓練", why: "可以問 AI，但不要讓你的對話被拿去訓練模型。", items: [
+    { id: "ai-chatgpt", t: "ChatGPT", both: "App → 設定 → 資料控制 → 關閉「為所有人改善模型」" },
+    { id: "ai-gemini", t: "Gemini", both: "Gemini → 設定 → 活動（「Gemini 應用程式活動」或「保留活動記錄」）→ 關閉" },
+    { id: "ai-copilot", t: "Copilot", both: "Copilot → 設定 → 隱私權 → 關閉「以文字／語音進行模型訓練」" },
+    { id: "ai-company", t: "公司配發的企業版 AI 依公司政策為準", both: "" },
+  ]},
+  { id: "pw", unit: "06", c: "--u6", title: "密碼健檢與 MFA", why: "一個網站外洩，同一組密碼的帳號全部陪葬。", items: [
+    { id: "pw-hibp", t: "到 haveibeenpwned.com 查自己的信箱有沒有外洩", both: "只輸入信箱，絕對不要在任何查詢網站輸入密碼" },
+    { id: "pw-reuse", t: "揪出重複使用的密碼",
+      ios: "「密碼」App → 安全性建議（舊版 iOS：設定 → 密碼 → 安全性建議）",
+      android: "Google 密碼管理工具 → 密碼檢查" },
+    { id: "pw-mfa", t: "重要帳號開啟 MFA，優先用驗證器 App", both: "Google Authenticator 或 Microsoft Authenticator；簡訊 OTP 也比沒開好" },
+    { id: "pw-gen", t: "下次註冊時用「自動產生強密碼」", both: "交給密碼管理工具記，不用自己想" },
+  ]},
+  { id: "report", unit: "07", c: "--u7", title: "165 存起來＋學會檢舉", why: "出事不慌，照「停、存、改、報」走。", items: [
+    { id: "rep-165", t: "把 165 加入通訊錄，名稱存「165 反詐騙」", both: "" },
+    { id: "rep-sms", t: "學會回報垃圾訊息",
+      ios: "在訊息上長按或左滑 → 回報垃圾訊息",
+      android: "Google 訊息：長按對話 → 封鎖 → 勾選回報垃圾訊息" },
+    { id: "rep-line", t: "學會 LINE 檢舉", both: "進入對方聊天室 → 右上角選單 → 檢舉" },
+    { id: "rep-air", t: "練習 3 秒內開飛航模式",
+      ios: "從右上角往下滑開控制中心 → 點飛機圖示",
+      android: "從上方往下滑開快速設定 → 點飛航模式" },
+    { id: "rep-contact", t: "寫下公司資安窗口", input: true },
+  ]},
+];
+const KEY = "checklist-v1";
+const state = App.load(KEY, { p: /android/i.test(navigator.userAgent) ? "android" : "ios", done: {}, contact: "" });
+const list = document.getElementById("list");
+const total = SECTIONS.reduce((n, s) => n + s.items.length, 0);
+
+function save() { App.save(KEY, state); }
+function progress() {
+  const n = Object.values(state.done).filter(Boolean).length;
+  const pct = Math.round(n / total * 100);
+  document.getElementById("bar").style.width = pct + "%";
+  document.getElementById("pct").textContent = pct + "%";
+}
+function render() {
+  document.querySelectorAll("[data-p]").forEach(b => b.classList.toggle("active", b.dataset.p === state.p));
+  list.innerHTML = "";
+  for (const s of SECTIONS) {
+    const sec = App.el("section", { class: "sec", id: s.id, style: "--c: var(" + s.c + ")" },
+      App.el("div", { class: "sec-h" }, App.el("span", { class: "u" }, s.unit), App.el("h2", {}, s.title)),
+      App.el("p", { class: "muted", style: "margin:4px 0 6px" }, s.why));
+    for (const it of s.items) {
+      const box = App.el("input", { type: "checkbox" });
+      box.checked = !!state.done[it.id];
+      const path = it.both != null ? it.both : it[state.p];
+      const body = App.el("span", { class: "t" }, it.t, path ? App.el("span", { class: "path" }, path) : "");
+      const lab = App.el("label", { class: "item" + (box.checked ? " done" : "") }, box, body);
+      if (it.input) {
+        const inp = App.el("input", { class: "input", style: "margin-top:8px;font-family:var(--font)", placeholder: "例如：資訊室 分機 1234", value: state.contact || "" });
+        inp.addEventListener("input", () => { state.contact = inp.value; save(); });
+        body.append(inp);
+      }
+      box.addEventListener("change", () => { state.done[it.id] = box.checked; lab.classList.toggle("done", box.checked); save(); progress(); });
+      sec.append(lab);
+    }
+    list.append(sec);
+  }
+  progress();
+  if (location.hash) { const t = document.querySelector(location.hash); if (t) t.scrollIntoView(); }
+}
+document.querySelectorAll("[data-p]").forEach(b => b.addEventListener("click", () => {
+  state.p = b.dataset.p; save();
+  const y = window.scrollY; render(); window.scrollTo(0, y);
+}));
+render();
+</script>
+</body>
+</html>

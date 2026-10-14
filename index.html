@@ -1,0 +1,77 @@
+<!doctype html>
+<html lang="zh-Hant-TW">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>手機資安防護 · 課堂互動</title>
+<meta name="description" content="手機資安防護、瀏覽器與 AI 安全操作：講師示範工具與學員實作練習">
+<link rel="icon" href="data:image/svg+xml,%3Csvg xmlns=%22http://www.w3.org/2000/svg%22 viewBox=%220 0 100 100%22%3E%3Ctext y=%22.9em%22 font-size=%2290%22%3E%F0%9F%9B%A1%EF%B8%8F%3C/text%3E%3C/svg%3E">
+<link rel="stylesheet" href="assets/style.css">
+<script src="assets/common.js"></script>
+</head>
+<body data-home="1">
+<main class="wrap">
+  <span class="tag">課堂互動</span>
+  <h1>手機資安防護<br>瀏覽器與 AI 安全操作</h1>
+  <p class="lead">用手機打開這一頁，跟著課程各單元一起練習。所有練習都不需要登入，也不會收集你的個人資料。</p>
+
+  <div class="card accent">
+    <h3>📱 先做這件事</h3>
+    <p class="muted" style="margin:0">打開 <a href="checklist.html">手機安全設定檢核清單</a>，上課時每完成一項就打勾，做完的進度會留在你的手機上。</p>
+  </div>
+
+  <div id="units"></div>
+</main>
+
+<script>
+const UNITS = [
+  { n: "01", c: "--u1", t: "日常手機與 AI 資安風險", items: [
+    { k: "講師示範", name: "AI 釣魚簡訊拆解", desc: "AI 寫的釣魚簡訊零錯字，四個特徵照樣抓得到", href: "ai-sms.html" },
+    { k: "講師示範", name: "AI 假圖片", desc: "現場生成尾牙合照，找破綻、學查證", href: "ai-image.html" },
+    { k: "學員實作", name: "訊息真假投票", desc: "4 則訊息，2 真 2 假，其中 1 則是 AI 寫的", href: "sms-vote.html" },
+  ]},
+  { n: "02", c: "--u2", t: "釣魚網站與瀏覽器安全", items: [
+    { k: "講師示範", name: "網址拆解器", desc: "輸入網址，由右往左標出真正的主網域", href: "url.html" },
+    { k: "講師示範", name: "認出搜尋廣告", desc: "排名第一不代表是官方：搜尋結果示意", href: "search-ad.html" },
+    { k: "學員實作", name: "釣魚網址測驗", desc: "10 個網址，判斷真假，練習由右往左讀", href: "phish-quiz.html" },
+    { k: "學員實作", name: "Google 釣魚測驗（外部網站）", desc: "phishingquiz.withgoogle.com，課堂做前 4 題", href: "https://phishingquiz.withgoogle.com/" },
+  ]},
+  { n: "03", c: "--u3", t: "QR Code 與公共 Wi-Fi", items: [
+    { k: "講師示範", name: "QR Code 掃碼演練", desc: "產生演練用 QR Code，練習掃碼後先看網址", href: "qr.html" },
+    { k: "跟著做", name: "關掉 Wi-Fi 自動連線", desc: "iPhone / Android 設定步驟與打勾", href: "checklist.html#wifi" },
+  ]},
+  { n: "04", c: "--u4", t: "App 權限與個資安全", items: [
+    { k: "跟著做", name: "App 權限健檢", desc: "定位、相機、麥克風逐項檢查", href: "checklist.html#perm" },
+  ]},
+  { n: "05", c: "--u5", t: "生成式 AI 資安風險", items: [
+    { k: "學員實作", name: "資料卡紅綠燈", desc: "8 張資料卡，哪些能貼給 AI？", href: "datacards.html" },
+    { k: "跟著做", name: "關掉 AI 拿對話去訓練", desc: "ChatGPT / Gemini / Copilot 設定", href: "checklist.html#ai" },
+    { k: "講師示範", name: "AI 會自信地答錯", desc: "請 AI 給參考連結，一個一個查證", href: "ai-verify.html" },
+  ]},
+  { n: "06", c: "--u6", t: "密碼與 AI 社交工程", items: [
+    { k: "學員實作", name: "第二管道演練", desc: "抽情境卡，兩人一組演出確認流程", href: "second-channel.html" },
+    { k: "跟著做", name: "密碼健檢與 MFA", desc: "查外洩、找重複密碼、開驗證器", href: "checklist.html#pw" },
+  ]},
+  { n: "07", c: "--u7", t: "資安事件應變", items: [
+    { k: "學員實作", name: "情境桌遊", desc: "3 張情境卡，用「停、存、改、報」拆解", href: "scenarios.html" },
+    { k: "跟著做", name: "165 存起來＋檢舉", desc: "把 165 加入通訊錄、學會檢舉", href: "checklist.html#report" },
+  ]},
+  { n: "08", c: "--u8", t: "重點整理與總測驗", items: [
+    { k: "學員實作", name: "總測驗", desc: "10 題快問快答，涵蓋今天全部單元", href: "final-quiz.html" },
+    { k: "帶回家", name: "十條守則小抄", desc: "可列印、可截圖存手機", href: "cheatsheet.html" },
+  ]},
+];
+const host = document.getElementById("units");
+for (const u of UNITS) {
+  const sec = App.el("section", { style: "--c: var(" + u.c + ")" },
+    App.el("div", { class: "unit-h" }, App.el("span", { class: "num" }, u.n), App.el("span", { class: "t" }, u.t)),
+    App.el("div", { class: "grid" }, u.items.map(i =>
+      App.el("a", { class: "tile", href: i.href },
+        App.el("div", { class: "kind" }, i.k),
+        App.el("div", { class: "name" }, i.name),
+        App.el("div", { class: "desc" }, i.desc)))));
+  host.append(sec);
+}
+</script>
+</body>
+</html>

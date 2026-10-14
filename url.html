@@ -1,0 +1,102 @@
+<!doctype html>
+<html lang="zh-Hant-TW">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>網址拆解器 · 由右往左讀</title>
+<link rel="icon" href="data:image/svg+xml,%3Csvg xmlns=%22http://www.w3.org/2000/svg%22 viewBox=%220 0 100 100%22%3E%3Ctext y=%22.9em%22 font-size=%2290%22%3E%F0%9F%9B%A1%EF%B8%8F%3C/text%3E%3C/svg%3E">
+<link rel="stylesheet" href="assets/style.css">
+<style>
+  .urlview { font-family: var(--mono); font-size: clamp(16px, 4.2vw, 26px); word-break: break-all; line-height: 1.5;
+    background: var(--bg-2); border: 1.5px solid var(--line); border-radius: 12px; padding: 14px 16px; }
+  .seg-scheme, .seg-path { color: var(--muted); }
+  .seg-sub { color: var(--bad); }
+  .seg-domain { color: var(--ok); font-weight: 800; text-decoration: underline; text-underline-offset: 4px; }
+  .seg-user { color: var(--muted); text-decoration: line-through; }
+  .part { display: grid; grid-template-columns: minmax(0, 1fr); gap: 2px; padding: 12px 14px; border-radius: 12px; border: 1.5px solid var(--line); margin: 8px 0; background: var(--card); }
+  .part .v { font-family: var(--mono); font-size: 18px; word-break: break-all; }
+  .part.sub { border-color: var(--bad); } .part.sub .v { color: var(--bad); }
+  .part.domain { border-color: var(--ok); } .part.domain .v { color: var(--ok); font-weight: 800; }
+  .part .k { font-size: 14px; color: var(--muted); }
+  .warn-item { border-left: 0; background: rgba(248,113,113,.12); border: 1.5px solid var(--bad); }
+  .note-item { background: var(--card); }
+  .examples button { font-family: var(--mono); font-size: 14px; min-height: 40px; max-width: 100%; word-break: break-all; text-align: left; }
+</style>
+<script src="assets/common.js"></script>
+<script src="assets/urltools.js"></script>
+</head>
+<body data-unit="2">
+<main class="wrap">
+  <span class="tag">單元 02 · 講師示範</span>
+  <h1>網址拆解器</h1>
+  <p class="lead">口訣：<b>網址由右往左讀，找到真正的家</b>。貼上或輸入一個網址，這裡會幫你標出子網域（偽裝）和主網域（真正的家）。只做文字分析，不會連到那個網址。</p>
+
+  <input id="u" class="input" type="url" inputmode="url" autocomplete="off" autocapitalize="off" spellcheck="false"
+         placeholder="例如 https://secure.cathaybk.com.verify.top/account">
+  <div class="row examples" style="margin-top:10px">
+    <span class="muted small">試試看：</span>
+  </div>
+
+  <div id="out" style="margin-top:18px"></div>
+  <p class="muted small" style="margin-top:24px">投影時在網址後面加上 <kbd>?present=1</kbd> 會放大字體。這個工具使用簡化的網域規則，判斷結果僅供教學，實際仍以官方管道確認為準。</p>
+</main>
+
+<script>
+const EXAMPLES = [
+  "https://secure.cathaybk.com.verify.top/account",
+  "www.cathaybk.com.tw",
+  "cathaybk-secure.login-verify.cc",
+  "www.cathaybk.com.tw.login.evil.ru",
+  "https://www.cathaybk.com.tw@evil.ru/login",
+  "reurl.cc/a1b2c3",
+];
+const input = document.getElementById("u");
+const ex = document.querySelector(".examples");
+for (const e of EXAMPLES) {
+  ex.append(App.el("button", { class: "btn ghost", type: "button", onclick: () => { input.value = e; render(); } }, e));
+}
+
+function render() {
+  const out = document.getElementById("out");
+  out.innerHTML = "";
+  if (!input.value.trim()) return;
+  const r = UrlTools.analyze(input.value);
+  if (r.error) { out.append(App.el("div", { class: "card warn-item" }, r.error)); return; }
+  const { url, parts, raw } = r;
+
+  // 彩色網址
+  const view = App.el("div", { class: "urlview" });
+  view.append(App.el("span", { class: "seg-scheme" }, url.protocol + "//"));
+  const at = raw.match(/^[a-z]+:\/\/([^/]*)@/i) || raw.match(/^([^/]*)@/);
+  if (at) view.append(App.el("span", { class: "seg-user" }, at[1] + "@"));
+  if (parts.sub) view.append(App.el("span", { class: "seg-sub" }, parts.sub + "."));
+  view.append(App.el("span", { class: "seg-domain" }, parts.domain));
+  const rest = (url.port ? ":" + url.port : "") + url.pathname + url.search + url.hash;
+  if (rest && rest !== "/") view.append(App.el("span", { class: "seg-path" }, rest));
+  out.append(view);
+
+  // 拆開看
+  out.append(App.el("h2", {}, "把它拆開看"));
+  if (parts.sub) out.append(App.el("div", { class: "part sub" },
+    App.el("div", { class: "v" }, parts.sub), App.el("div", { class: "k" }, "子網域：只是門牌前面的字，誰都可以隨便取")));
+  out.append(App.el("div", { class: "part domain" },
+    App.el("div", { class: "v" }, parts.domain), App.el("div", { class: "k" }, "主網域：由右往左讀，這裡才是真正的家")));
+  if (rest && rest !== "/") out.append(App.el("div", { class: "part" },
+    App.el("div", { class: "v" }, rest), App.el("div", { class: "k" }, "路徑：不重要，先看主網域")));
+
+  if (r.warnings.length) {
+    out.append(App.el("h2", {}, "⚠️ 可疑的地方"));
+    for (const w of r.warnings) out.append(App.el("div", { class: "card warn-item" }, w));
+  }
+  out.append(App.el("h2", {}, "補充"));
+  for (const n of r.notes) out.append(App.el("div", { class: "card note-item" }, n));
+  out.append(App.el("div", { class: "card accent" },
+    App.el("b", {}, "結論："), "這個網址真正的家是 ", App.el("b", { class: "mono" }, parts.domain),
+    "。問自己：這是我要去的那家嗎？不確定就關掉，從官方 App 或自己輸入官網網址進去。"));
+}
+input.addEventListener("input", render);
+const q = new URLSearchParams(location.search).get("u");
+if (q) { input.value = q; render(); }
+</script>
+</body>
+</html>

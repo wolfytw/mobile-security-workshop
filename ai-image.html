@@ -1,0 +1,92 @@
+<!doctype html>
+<html lang="zh-Hant-TW">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>AI 假圖片：眼見不再為憑</title>
+<link rel="icon" href="data:image/svg+xml,%3Csvg xmlns=%22http://www.w3.org/2000/svg%22 viewBox=%220 0 100 100%22%3E%3Ctext y=%22.9em%22 font-size=%2290%22%3E%F0%9F%9B%A1%EF%B8%8F%3C/text%3E%3C/svg%3E">
+<link rel="stylesheet" href="assets/style.css">
+<style>
+  .prompt { font-size: 17px; line-height: 1.8; background: var(--bg-2); border: 1.5px dashed var(--accent); border-radius: 12px; padding: 14px 16px; }
+  .flip { cursor: pointer; }
+  .flip .a { display: none; margin-top: 6px; color: var(--muted); }
+  .flip.open .a { display: block; }
+  .flip .hint { font-size: 13px; color: var(--muted); }
+  .flip.open .hint { display: none; }
+  body.present .prompt { font-size: 24px; }
+</style>
+<script src="assets/common.js"></script>
+</head>
+<body data-unit="1">
+<main class="wrap">
+  <span class="tag">單元 01 · 講師示範</span>
+  <h1>AI 假圖片：眼見不再為憑</h1>
+  <p class="lead">現場用手機 AI 生成一張「公司尾牙大合照」，問全班真的還假的，再揭曉：照片裡每個人都不存在。</p>
+
+  <h2>示範流程（約 2 分鐘）</h2>
+  <div class="card">
+    <ol class="steps">
+      <li>手機打開 ChatGPT、Gemini 或 Copilot，貼上下面的提示詞。</li>
+      <li>全螢幕投影生成的照片，先不說明，問全班：<b>這張是真的還是假的？</b>舉手投票。</li>
+      <li>揭曉：AI 生成的，照片裡每個人都不存在。</li>
+      <li>結論：從今天起，看到圖片先懷疑，再查證。</li>
+    </ol>
+  </div>
+
+  <h2>提示詞（點按鈕複製）</h2>
+  <div class="prompt" id="p">請生成一張台灣公司尾牙的大合照：約 30 位同事站在餐廳舞台前，背景有紅色布條寫著「2026 年度尾牙」，大家舉杯微笑。用手機拍攝、略帶閃光燈的真實照片風格，不要插畫感。</div>
+  <div class="row" style="margin-top:10px">
+    <button class="btn primary" type="button" id="copy">複製提示詞</button>
+    <span class="muted small" id="copied"></span>
+  </div>
+  <div class="card accent">
+    <h3>備案</h3>
+    <p class="muted" style="margin:0">生成圖片可能要 30 秒以上，現場網路也可能不穩。<b style="color:var(--text)">課前先生成 2～3 張存進相簿</b>，現場直接打開相簿展示；有時間再現場生成一次給大家看速度。</p>
+  </div>
+
+  <h2>找破綻：點一下看答案</h2>
+  <p class="muted">先讓學員自己找，再逐張翻開。新一代 AI 的破綻越來越少，所以最後一定要講到「查證」。</p>
+  <div class="grid" id="flaws"></div>
+
+  <h2>查證三步驟</h2>
+  <div class="card">
+    <ol class="steps">
+      <li><b>看來源</b>：誰發的？是第一手的官方帳號、媒體，還是轉了好幾手的群組圖？</li>
+      <li><b>以圖搜圖</b>：Chrome 或 Google App 長按圖片 →「用 Google 智慧鏡頭搜尋」，看這張圖最早出現在哪裡、有沒有被查核過。</li>
+      <li><b>找第二來源</b>：重大消息去官方網站或新聞查證；牽涉到錢或個資，就用你自己知道的管道確認。</li>
+    </ol>
+    <p class="muted small" style="margin:6px 0 0">有些 AI 工具會在圖片加上內容憑證或隱形浮水印，但不是每張圖都有，也可能被去除。<b>查不到標記，不代表是真的。</b></p>
+  </div>
+
+  <h2>學員小任務（1 分鐘）</h2>
+  <div class="card">
+    <p style="margin:0">打開手機相簿或 LINE 群組，挑一張別人轉傳的圖片，用「Google 智慧鏡頭」搜尋一次，看看它最早是誰發的。</p>
+  </div>
+</main>
+<script>
+const FLAWS = [
+  ["手和手指", "手指數量不對、握杯姿勢怪異、手指融在一起。"],
+  ["文字", "布條、海報、名牌上的字常常變成亂碼或錯字。"],
+  ["背景人臉", "後排的人臉糊成一團、五官怪異，或好幾個人長得一模一樣。"],
+  ["配件與對稱", "耳環左右不一樣、眼鏡框斷掉、衣領或領帶不連續。"],
+  ["光影", "每個人的影子方向不同，或閃光燈反光位置不合理。"],
+  ["太完美", "每個人都在笑、都看鏡頭、皮膚光滑得不自然。"],
+];
+const host = document.getElementById("flaws");
+FLAWS.forEach(([t, a]) => {
+  const c = App.el("div", { class: "card flip", role: "button", tabindex: "0" },
+    App.el("h3", {}, t), App.el("div", { class: "hint" }, "點一下翻開"), App.el("div", { class: "a" }, a));
+  const toggle = () => c.classList.toggle("open");
+  c.addEventListener("click", toggle);
+  c.addEventListener("keydown", e => { if (e.key === "Enter" || e.key === " ") { e.preventDefault(); toggle(); } });
+  host.append(c);
+});
+document.getElementById("copy").addEventListener("click", async () => {
+  const t = document.getElementById("p").textContent;
+  const msg = document.getElementById("copied");
+  try { await navigator.clipboard.writeText(t); msg.textContent = "已複製"; }
+  catch (e) { msg.textContent = "無法自動複製，請長按上面的文字手動複製"; }
+});
+</script>
+</body>
+</html>

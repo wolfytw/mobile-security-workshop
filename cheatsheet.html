@@ -1,0 +1,77 @@
+<!doctype html>
+<html lang="zh-Hant-TW">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>十條守則小抄</title>
+<link rel="icon" href="data:image/svg+xml,%3Csvg xmlns=%22http://www.w3.org/2000/svg%22 viewBox=%220 0 100 100%22%3E%3Ctext y=%22.9em%22 font-size=%2290%22%3E%F0%9F%9B%A1%EF%B8%8F%3C/text%3E%3C/svg%3E">
+<link rel="stylesheet" href="assets/style.css">
+<style>
+  ol.rules { list-style: none; padding: 0; margin: 0; display: grid; gap: 8px; }
+  ol.rules li { display: flex; gap: 12px; align-items: baseline; background: var(--card); border: 1.5px solid var(--line); border-radius: 12px; padding: 10px 14px; font-size: 18px; }
+  ol.rules li b { color: var(--accent); font-size: 20px; min-width: 2ch; }
+  .ssgb { display: grid; grid-template-columns: repeat(4, 1fr); gap: 8px; }
+  .ssgb div { text-align: center; border: 1.5px solid var(--line); border-radius: 12px; padding: 10px 6px; background: var(--card); }
+  .ssgb .k { font-size: 30px; font-weight: 900; line-height: 1.2; }
+  .ssgb .d { font-size: 13px; color: var(--muted); }
+  .lights { display: grid; gap: 6px; }
+  @media (max-width: 520px) { .ssgb { grid-template-columns: repeat(2, 1fr); } }
+  @media print {
+    ol.rules li, .ssgb div { background: #fff; border-color: #999; color: #000; }
+    .ssgb .d { color: #333; }
+    h1 { font-size: 24px; }
+  }
+</style>
+<script src="assets/common.js"></script>
+</head>
+<body data-unit="8">
+<main class="wrap">
+  <span class="tag">帶回家</span>
+  <h1>十條守則：今天的全部濃縮在這裡</h1>
+  <p class="lead noprint">截圖存在手機，或按下方按鈕列印貼在桌前。</p>
+
+  <ol class="rules">
+    <li><b>01</b>像真的，不代表就是真的</li>
+    <li><b>02</b>網址由右往左讀，找到真正的家</li>
+    <li><b>03</b>有鎖頭不代表安全</li>
+    <li><b>04</b>掃碼後先看網址，確定再點</li>
+    <li><b>05</b>公共 Wi-Fi 不處理公事和轉帳</li>
+    <li><b>06</b>App 權限給最小，定期健檢</li>
+    <li><b>07</b>問 AI 用紅綠燈：機密個資絕不貼</li>
+    <li><b>08</b>密碼不重用，MFA 一定開</li>
+    <li><b>09</b>異常要求，一律第二管道確認</li>
+    <li><b>10</b>出事不慌：停、存、改、報</li>
+  </ol>
+
+  <h2>出事時：停、存、改、報</h2>
+  <div class="ssgb">
+    <div><div class="k" style="color:var(--u1)">停</div><div class="d">停止操作<br>開飛航模式</div></div>
+    <div><div class="k" style="color:var(--u3)">存</div><div class="d">截圖證據<br>訊息不要刪</div></div>
+    <div><div class="k" style="color:var(--u2)">改</div><div class="d">修改密碼<br>查登入紀錄</div></div>
+    <div><div class="k" style="color:var(--u7)">報</div><div class="d">通報資安窗口<br>詐騙打 165</div></div>
+  </div>
+
+  <h2>問 AI 前：紅綠燈</h2>
+  <div class="lights">
+    <div class="card" style="margin:0;border-color:var(--bad)">🔴 <b>紅燈 絕對不上傳</b>　公司機密、個資、客戶資料、帳號密碼金鑰</div>
+    <div class="card" style="margin:0;border-color:var(--warn)">🟡 <b>黃燈 處理過再問</b>　去識別化、模糊化之後再問</div>
+    <div class="card" style="margin:0;border-color:var(--ok)">🟢 <b>綠燈 放心問</b>　公開資訊、一般知識</div>
+  </div>
+
+  <h2>重要聯絡</h2>
+  <div class="card">
+    <div>反詐騙專線：<b>165</b></div>
+    <div>公司資安窗口：<b id="contact">（到檢核清單填寫後會顯示在這裡）</b></div>
+  </div>
+
+  <div class="row noprint" style="margin-top:16px">
+    <button class="btn primary" type="button" onclick="window.print()">列印</button>
+    <a class="btn ghost" href="checklist.html#report">填寫資安窗口</a>
+  </div>
+</main>
+<script>
+const st = App.load("checklist-v1", null);
+if (st && st.contact) document.getElementById("contact").textContent = st.contact;
+</script>
+</body>
+</html>

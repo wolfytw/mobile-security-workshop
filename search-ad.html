@@ -1,0 +1,82 @@
+<!doctype html>
+<html lang="zh-Hant-TW">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>認出搜尋廣告：排名 ≠ 官方</title>
+<link rel="icon" href="data:image/svg+xml,%3Csvg xmlns=%22http://www.w3.org/2000/svg%22 viewBox=%220 0 100 100%22%3E%3Ctext y=%22.9em%22 font-size=%2290%22%3E%F0%9F%9B%A1%EF%B8%8F%3C/text%3E%3C/svg%3E">
+<link rel="stylesheet" href="assets/style.css">
+<style>
+  .serp { background: #f8f9fb; color: #1f2937; border-radius: 18px; padding: 14px; max-width: 620px; }
+  .sbox { display: flex; align-items: center; gap: 10px; background: #fff; border: 1px solid #d1d5db; border-radius: 999px; padding: 10px 16px; font-size: 17px; margin-bottom: 10px; }
+  .res { background: #fff; border: 2px solid transparent; border-radius: 14px; padding: 12px 14px; margin: 8px 0; cursor: pointer; transition: border-color .15s ease; }
+  .res:hover { border-color: #cbd5e1; }
+  .res .ad { font-size: 13px; font-weight: 700; color: #111827; }
+  .res .ad.mark { background: #fde68a; border-radius: 4px; padding: 0 4px; box-shadow: 0 0 0 2px #f59e0b; }
+  .res .u { font-size: 14px; color: #374151; font-family: var(--mono); word-break: break-all; }
+  .res .t { font-size: 19px; color: #1d4ed8; margin: 2px 0; }
+  .res .d { font-size: 14px; color: #4b5563; }
+  .res .why { display: none; margin-top: 10px; padding: 10px 12px; border-radius: 10px; font-size: 15px; }
+  .res.open .why { display: block; }
+  .res.bad.open { border-color: #ef4444; } .res.bad .why { background: #fee2e2; color: #7f1d1d; }
+  .res.good.open { border-color: #10b981; } .res.good .why { background: #d1fae5; color: #064e3b; }
+  .dom { font-weight: 800; text-decoration: underline; }
+  body.present .serp { max-width: 980px; }
+  body.present .res .t { font-size: 28px; } body.present .res .u { font-size: 20px; } body.present .res .d, body.present .res .why { font-size: 20px; }
+</style>
+<script src="assets/common.js"></script>
+</head>
+<body data-unit="2">
+<main class="wrap">
+  <span class="tag">單元 02 · 講師示範</span>
+  <h1>認出搜尋廣告：排名 ≠ 官方</h1>
+  <p class="lead">現場用手機搜尋「XX銀行 網路銀行」最真實；網路不穩或搜尋結果剛好沒有廣告時，用這個示意畫面講解。點每一筆結果看拆解。</p>
+
+  <div class="serp">
+    <div class="sbox">🔍 <span>星辰銀行 網路銀行</span></div>
+    <div id="list"></div>
+  </div>
+  <p class="muted small">示意畫面：銀行名稱與網址皆為虛構，不是真實的搜尋結果。</p>
+
+  <h2>重點</h2>
+  <div class="card">
+    <ol class="steps">
+      <li>結果最上方標著小小的「<b>贊助</b>」或「<b>廣告</b>」：這個位置是花錢買的。</li>
+      <li>官方也可能買廣告，所以重點不是「廣告一定是假的」，而是<b>排名第一不代表是官方</b>。</li>
+      <li>每一筆都用「由右往左讀」找真正的家。</li>
+      <li>最好的做法：<b>從官方 App 進入，或把官網存成書籤</b>，不要每次都用搜尋找網銀。</li>
+    </ol>
+  </div>
+</main>
+<script>
+const RES = [
+  { ad: true, good: false, u: "https://starbank-login.help/ebank", dom: "starbank-login.help",
+    t: "星辰銀行網路銀行登入｜官方快速入口", d: "免下載 App，一鍵登入網路銀行。24 小時快速轉帳，帳戶安全驗證。",
+    why: "標著「贊助」。真正的家是 starbank-login.help，名字裡有 starbank，但不是銀行的官方網域。自稱「官方」誰都可以寫。" },
+  { ad: true, good: false, u: "https://star-bank.online-service.top/", dom: "online-service.top",
+    t: "星辰銀行 個人網銀 – 帳戶異常請立即驗證", d: "您的帳戶可能已被停用，請盡快完成驗證以免影響權益。",
+    why: "也是廣告。由右往左讀：真正的家是 online-service.top，star-bank 只是子網域。描述還在製造急迫。" },
+  { ad: false, good: true, u: "https://www.starbank.com.tw/", dom: "starbank.com.tw",
+    t: "星辰銀行 Star Bank｜官方網站", d: "個人金融、信用卡、網路銀行與行動銀行服務。",
+    why: "沒有贊助標示。主網域是 starbank.com.tw（.com.tw 算一組結尾），跟銀行官方 App 或卡片背面印的網址一致，才是官網。" },
+  { ad: false, good: true, u: "https://zh.wikipedia.org/wiki/星辰銀行", dom: "wikipedia.org",
+    t: "星辰銀行 - 維基百科", d: "星辰銀行是一間虛構的教學用銀行……",
+    why: "百科頁面不是登入網銀的地方，但可以用來對照官方網址。" },
+];
+const list = document.getElementById("list");
+RES.forEach(r => {
+  const u = App.escape(r.u).replace(App.escape(r.dom), '<span class="dom">' + App.escape(r.dom) + "</span>");
+  const card = App.el("div", { class: "res " + (r.good ? "good" : "bad"), role: "button", tabindex: "0" },
+    r.ad ? App.el("div", { class: "ad" }, "贊助") : "",
+    App.el("div", { class: "u", html: u }),
+    App.el("div", { class: "t" }, r.t),
+    App.el("div", { class: "d" }, r.d),
+    App.el("div", { class: "why" }, (r.good ? "✅ " : "⚠️ ") + r.why));
+  const toggle = () => { card.classList.toggle("open"); const a = card.querySelector(".ad"); if (a) a.classList.toggle("mark", card.classList.contains("open")); };
+  card.addEventListener("click", toggle);
+  card.addEventListener("keydown", e => { if (e.key === "Enter" || e.key === " ") { e.preventDefault(); toggle(); } });
+  list.append(card);
+});
+</script>
+</body>
+</html>

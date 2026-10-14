@@ -1,0 +1,96 @@
+<!doctype html>
+<html lang="zh-Hant-TW">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>AI 釣魚簡訊拆解</title>
+<link rel="icon" href="data:image/svg+xml,%3Csvg xmlns=%22http://www.w3.org/2000/svg%22 viewBox=%220 0 100 100%22%3E%3Ctext y=%22.9em%22 font-size=%2290%22%3E%F0%9F%9B%A1%EF%B8%8F%3C/text%3E%3C/svg%3E">
+<link rel="stylesheet" href="assets/style.css">
+<style>
+  .phone { background: #0b1220; border: 1.5px solid var(--line); border-radius: 22px; padding: 14px; max-width: 520px; }
+  .sender { font-family: var(--mono); color: var(--muted); font-size: 15px; margin-bottom: 8px; }
+  .bubble { background: #26324d; border-radius: 18px 18px 18px 6px; padding: 12px 14px; font-size: 18px; line-height: 1.7; }
+  .hl { border-radius: 6px; padding: 0 2px; transition: background .2s ease, box-shadow .2s ease; }
+  .on-from .f-from, .on-link .f-link, .on-urgent .f-urgent, .on-act .f-act { box-shadow: 0 0 0 2px currentColor; }
+  .on-from .f-from { background: rgba(248,113,113,.25); color: #fecaca; }
+  .on-link .f-link { background: rgba(251,146,60,.25); color: #fed7aa; }
+  .on-urgent .f-urgent { background: rgba(251,191,36,.25); color: #fde68a; }
+  .on-act .f-act { background: rgba(34,211,238,.25); color: #a5f3fc; }
+  .chips button { min-height: 42px; }
+  .chips button.active { border-color: var(--accent); background: var(--accent); color: #0b1220; }
+  .tabs { display: flex; gap: 8px; flex-wrap: wrap; margin: 6px 0 14px; }
+  .tabs button.active { border-color: var(--accent); color: var(--accent); }
+</style>
+<script src="assets/common.js"></script>
+</head>
+<body data-unit="1">
+<main class="wrap">
+  <span class="tag">單元 01 · 講師示範</span>
+  <h1>AI 寫的釣魚簡訊，四個特徵照樣抓得到</h1>
+  <p class="lead">下面是事先用 AI 產生、再改成虛構名稱的範例，不需要在課堂上現場生成。注意它們零錯字、語氣自然，但四個特徵一個都沒少。</p>
+
+  <div class="tabs" id="tabs"></div>
+  <div class="phone" id="phone"></div>
+
+  <h2>點一下，標出特徵</h2>
+  <div class="row chips" id="chips"></div>
+
+  <div class="card accent" style="margin-top:20px">
+    <h3>AI 讓詐騙「量產化」</h3>
+    <p class="muted" style="margin:0">以前詐騙集團要養文案寫手，錯字和怪語氣是破綻；現在 AI 幾秒寫好，成本趨近於零，數量與品質同時暴增。<b style="color:var(--text)">別再靠錯字判斷，改看這四個特徵。</b></p>
+  </div>
+</main>
+
+<script>
+const FEATURES = [
+  { k: "from", name: "① 來路不明", tip: "陌生號碼、境外碼" },
+  { k: "link", name: "② 短網址", tip: "看不出真正去向" },
+  { k: "urgent", name: "③ 製造急迫", tip: "凍結、限時、罰款" },
+  { k: "act", name: "④ 要你行動", tip: "點連結、回撥、給驗證碼" },
+];
+// [文字, 特徵]
+const MSGS = [
+  { title: "假銀行", sender: ["+63 917 482 ****", "from"], body: [
+    ["【XX銀行】您好，系統偵測到您的帳戶於異地登入，為保障資金安全，帳戶將於", null],
+    ["今日 23:59 前暫停使用", "urgent"], ["。", null],
+    ["請立即點擊", "act"], [" ", null], ["reurl.cc/Xk82pQ", "link"], [" ", null],
+    ["完成身分驗證", "act"], ["，逾時需臨櫃辦理。", null] ] },
+  { title: "假通行費", sender: ["+855 96 731 ****", "from"], body: [
+    ["【通行費催繳】您的車輛有一筆國道通行費尚未繳納，", null],
+    ["逾期將加收 300 元罰鍰並移送監理機關", "urgent"], ["。",null],
+    ["請於今日內透過", null], [" ", null], ["lihi.cc/etc-pay", "link"], [" ", null],
+    ["線上補繳", "act"], ["，以免影響您的權益。", null] ] },
+  { title: "假主管", sender: ["LINE：王經理（新帳號）", "from"], body: [
+    ["小陳，我在開會不方便講電話。", null], ["客戶那邊很急，下班前一定要處理好", "urgent"],
+    ["，", null], ["先幫我匯 8 萬到這個帳戶", "act"], ["，帳號我等等傳。", null],
+    ["另外你手機剛收到的驗證碼也傳給我一下", "act"], ["，我在幫你加進專案群組。", null] ] },
+];
+
+let cur = 0;
+const on = new Set();
+const phone = document.getElementById("phone");
+function render() {
+  const m = MSGS[cur];
+  phone.className = "phone " + [...on].map(k => "on-" + k).join(" ");
+  phone.innerHTML = "";
+  phone.append(App.el("div", { class: "sender" }, App.el("span", { class: "hl f-from" }, m.sender[0])));
+  const b = App.el("div", { class: "bubble" });
+  for (const [t, f] of m.body) b.append(f ? App.el("span", { class: "hl f-" + f }, t) : t);
+  phone.append(b);
+  document.querySelectorAll("#tabs button").forEach((x, i) => x.classList.toggle("active", i === cur));
+  document.querySelectorAll("#chips button").forEach(x => x.classList.toggle("active", on.has(x.dataset.k)));
+}
+const tabs = document.getElementById("tabs");
+MSGS.forEach((m, i) => tabs.append(App.el("button", { class: "btn ghost", type: "button",
+  onclick: () => { cur = i; on.clear(); render(); } }, "範例 " + (i + 1) + "：" + m.title)));
+const chips = document.getElementById("chips");
+for (const f of FEATURES) {
+  chips.append(App.el("button", { class: "btn", type: "button", "data-k": f.k, title: f.tip,
+    onclick: () => { on.has(f.k) ? on.delete(f.k) : on.add(f.k); render(); } }, f.name));
+}
+chips.append(App.el("button", { class: "btn primary", type: "button",
+  onclick: () => { FEATURES.forEach(f => on.add(f.k)); render(); } }, "全部標出"));
+render();
+</script>
+</body>
+</html>

@@ -1,0 +1,101 @@
+<!doctype html>
+<html lang="zh-Hant-TW">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>資料卡紅綠燈</title>
+<link rel="icon" href="data:image/svg+xml,%3Csvg xmlns=%22http://www.w3.org/2000/svg%22 viewBox=%220 0 100 100%22%3E%3Ctext y=%22.9em%22 font-size=%2290%22%3E%F0%9F%9B%A1%EF%B8%8F%3C/text%3E%3C/svg%3E">
+<link rel="stylesheet" href="assets/style.css">
+<style>
+  .rules { display: grid; gap: 8px; }
+  .rule { display: flex; gap: 10px; align-items: flex-start; padding: 10px 14px; border-radius: 12px; border: 1.5px solid var(--line); background: var(--card); }
+  .dot { width: 18px; height: 18px; border-radius: 50%; flex: 0 0 18px; margin-top: 5px; }
+  .r { background: var(--bad); } .y { background: var(--warn); } .g { background: var(--ok); }
+  .dcard { background: var(--card); border: 1.5px solid var(--line); border-radius: var(--radius); padding: 14px; }
+  .dcard .name { font-size: 19px; font-weight: 800; margin-bottom: 10px; }
+  .pick { display: grid; grid-template-columns: repeat(3, 1fr); gap: 8px; }
+  .pick button { min-height: 46px; padding: 6px; }
+  .pick button.sel-r { background: var(--bad); border-color: var(--bad); color: #0b1220; }
+  .pick button.sel-y { background: var(--warn); border-color: var(--warn); color: #0b1220; }
+  .pick button.sel-g { background: var(--ok); border-color: var(--ok); color: #0b1220; }
+  .dcard.correct { border-color: var(--ok); } .dcard.miss { border-color: var(--bad); }
+  .ans { margin-top: 10px; font-size: 15px; }
+</style>
+<script src="assets/common.js"></script>
+</head>
+<body data-unit="5">
+<main class="wrap">
+  <span class="tag">單元 05 · 學員實作</span>
+  <h1>資料卡紅綠燈</h1>
+  <p class="lead">這 8 份資料，哪些可以貼給 AI？小組討論後，替每張卡選一個燈號，最後再一起對答案。</p>
+
+  <div class="rules">
+    <div class="rule"><span class="dot r"></span><div><b>紅燈：絕對不上傳</b><div class="muted small">公司機密、個資、客戶資料、帳號密碼金鑰</div></div></div>
+    <div class="rule"><span class="dot y"></span><div><b>黃燈：處理過再問</b><div class="muted small">去識別化、模糊化之後再問</div></div></div>
+    <div class="rule"><span class="dot g"></span><div><b>綠燈：放心問</b><div class="muted small">公開資訊、一般知識</div></div></div>
+  </div>
+
+  <h2>你的判斷</h2>
+  <div class="grid" id="cards"></div>
+  <div class="row" style="margin-top:16px">
+    <button class="btn primary" type="button" id="check">對答案</button>
+    <button class="btn ghost" type="button" id="reset">重新來過</button>
+    <span class="muted small" id="count"></span>
+  </div>
+  <div id="result"></div>
+  <p class="muted small" style="margin-top:20px">實際規範以公司的 AI 使用政策為準；公司配發的企業版 AI 工具，可放的資料範圍可能不同。</p>
+</main>
+<script>
+const LABEL = { r: "🔴 紅燈", y: "🟡 黃燈", g: "🟢 綠燈" };
+const CARDS = [
+  { id: "salary", name: "薪資表", a: "r", why: "同時是個資和公司機密，任何形式都不要貼。" },
+  { id: "press", name: "公開新聞稿", a: "g", why: "已經公開發布的資訊，可以請 AI 幫忙改寫或摘要。" },
+  { id: "phones", name: "客戶電話名單", a: "r", why: "客戶個資，一外洩就是個資法問題。" },
+  { id: "spec", name: "產品公開規格", a: "g", why: "官網上就查得到的公開資料，放心問。" },
+  { id: "contract", name: "合約掃描檔", a: "r", why: "合約內容是機密，還有簽名、身分資料，整份都不要上傳。" },
+  { id: "complaint", name: "去識別化客訴信", a: "y", gray: true,
+    why: "灰色地帶：姓名、電話、地址、訂單編號、特殊事件細節都要拿掉，做到「別人無法回推是誰」才算黃燈，否則就是紅燈。" },
+  { id: "intranet", name: "公司內網公告", a: "y", gray: true,
+    why: "灰色地帶：看起來只是內部公告，但常含未公開的人事、財務或專案資訊。一般行政公告處理過再問；有未公開資訊就是紅燈。" },
+  { id: "apikey", name: "含 API Key 的程式碼", a: "r",
+    why: "金鑰外洩等於把系統鑰匙交出去。要問程式問題，先把金鑰換成 YOUR_API_KEY 這類假值，才算黃燈。" },
+];
+const KEY = "datacards-picks";
+let picks = App.load(KEY, {});
+const host = document.getElementById("cards");
+
+function render(showAns) {
+  host.innerHTML = "";
+  for (const c of CARDS) {
+    const card = App.el("div", { class: "dcard" + (showAns ? (picks[c.id] === c.a ? " correct" : " miss") : "") },
+      App.el("div", { class: "name" }, c.name));
+    const pick = App.el("div", { class: "pick" });
+    for (const k of ["r", "y", "g"]) {
+      pick.append(App.el("button", { class: "btn" + (picks[c.id] === k ? " sel-" + k : ""), type: "button",
+        onclick: () => { picks[c.id] = k; App.save(KEY, picks); render(false); } }, LABEL[k]));
+    }
+    card.append(pick);
+    if (showAns) {
+      card.append(App.el("div", { class: "ans" },
+        App.el("b", { class: "verdict " + (picks[c.id] === c.a ? "ok" : "bad") }, picks[c.id] === c.a ? "✅ " : "❌ "),
+        "答案：", App.el("b", {}, LABEL[c.a]), c.gray ? "（灰色地帶）" : "",
+        App.el("div", { class: "muted" }, c.why)));
+    }
+    host.append(card);
+  }
+  const n = Object.keys(picks).length;
+  document.getElementById("count").textContent = "已判斷 " + n + " / " + CARDS.length + " 張";
+  document.getElementById("result").innerHTML = "";
+  if (showAns) {
+    const ok = CARDS.filter(c => picks[c.id] === c.a).length;
+    document.getElementById("result").append(App.el("div", { class: "card accent" },
+      App.el("b", {}, "答對 " + ok + " / " + CARDS.length + " 張。"),
+      " 重點看兩張灰色地帶：去識別化客訴信、公司內網公告。判斷不了時，就當紅燈。"));
+  }
+}
+document.getElementById("check").addEventListener("click", () => render(true));
+document.getElementById("reset").addEventListener("click", () => { picks = {}; App.save(KEY, picks); render(false); });
+render(false);
+</script>
+</body>
+</html>

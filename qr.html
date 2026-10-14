@@ -1,0 +1,93 @@
+<!doctype html>
+<html lang="zh-Hant-TW">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>QR Code 掃碼演練</title>
+<link rel="icon" href="data:image/svg+xml,%3Csvg xmlns=%22http://www.w3.org/2000/svg%22 viewBox=%220 0 100 100%22%3E%3Ctext y=%22.9em%22 font-size=%2290%22%3E%F0%9F%9B%A1%EF%B8%8F%3C/text%3E%3C/svg%3E">
+<link rel="stylesheet" href="assets/style.css">
+<style>
+  .qrs { display: grid; gap: 16px; grid-template-columns: repeat(auto-fit, minmax(260px, 1fr)); margin-top: 16px; }
+  .qrbox { background: var(--card); border: 1.5px solid var(--line); border-radius: var(--radius); padding: 16px; text-align: center; }
+  .qrbox .lbl { font-size: 28px; font-weight: 900; color: var(--accent); }
+  .qrbox .img { background: #fff; border-radius: 12px; padding: 12px; display: inline-block; margin: 10px 0; }
+  .qrbox .img img { width: min(320px, 70vw); height: auto; image-rendering: pixelated; display: block; }
+  .qrbox .reveal { font-family: var(--mono); word-break: break-all; min-height: 1.6em; }
+  body.present .qrbox .img img { width: min(420px, 40vw); }
+</style>
+<script src="assets/common.js"></script>
+<script src="vendor/qrcode.js"></script>
+</head>
+<body data-unit="3">
+<main class="wrap">
+  <span class="tag">單元 03 · 講師示範</span>
+  <h1>掃碼後先看網址，確定再點</h1>
+  <p class="lead">投影下面兩個 QR Code，請全班用手機相機掃，<b>停在預覽畫面，不要點下去</b>。一起讀出網址：看得出它要去哪裡嗎？哪一個比較可信？</p>
+
+  <div class="qrs">
+    <div class="qrbox"><div class="lbl">A</div><div class="img" id="qa"></div>
+      <div><button class="btn ghost" type="button" data-r="a">公布網址</button></div><div class="reveal" id="ra"></div></div>
+    <div class="qrbox"><div class="lbl">B</div><div class="img" id="qb"></div>
+      <div><button class="btn ghost" type="button" data-r="b">公布網址</button></div><div class="reveal" id="rb"></div></div>
+  </div>
+
+  <details class="card noprint" style="margin-top:24px">
+    <summary><b>講師設定</b>（換成你自己的網址）</summary>
+    <p class="muted small">A 預設是本站的「演練落地頁」，學員就算點下去也只會看到教學說明。想更逼真，可以先到短網址服務把演練落地頁縮短，再貼到 A；B 預設是 165 官方網站，當作對照組。</p>
+    <label class="small muted">A（可疑）</label>
+    <input id="ia" class="input" type="url" autocomplete="off" spellcheck="false">
+    <label class="small muted" style="display:block;margin-top:10px">B（對照組）</label>
+    <input id="ib" class="input" type="url" autocomplete="off" spellcheck="false">
+    <div class="row" style="margin-top:12px">
+      <button class="btn primary" type="button" id="apply">更新 QR Code</button>
+      <button class="btn ghost" type="button" id="swap">A、B 對調</button>
+    </div>
+  </details>
+
+  <div class="card accent">
+    <h3>帶全班讀網址</h3>
+    <ol class="steps">
+      <li>預覽畫面只出現短網址（例如 reurl.cc/…）→ <b>看不出去向，不點</b>。</li>
+      <li>出現完整網址 → 用<a href="url.html">由右往左讀</a>找到主網域，是你預期的那家嗎？</li>
+      <li>要付款、登入、輸入個資的 QR Code → 改用官方 App 或自己輸入網址。</li>
+    </ol>
+  </div>
+</main>
+
+<script>
+const base = location.href.replace(/[^/]*([?#].*)?$/, "");
+const DEFAULT_A = base + "gotcha.html?from=qr&ref=parking-fee-verify";
+const DEFAULT_B = "https://165.npa.gov.tw/";
+const KEY = "qr-demo-urls";
+let urls = App.load(KEY, { a: DEFAULT_A, b: DEFAULT_B });
+
+function draw(id, text) {
+  const qr = qrcode(0, "M");
+  qr.addData(text);
+  qr.make();
+  const box = document.getElementById(id);
+  box.innerHTML = "";
+  box.append(App.el("img", { src: qr.createDataURL(8, 2), alt: "QR Code" }));
+}
+function renderAll() {
+  draw("qa", urls.a); draw("qb", urls.b);
+  document.getElementById("ia").value = urls.a;
+  document.getElementById("ib").value = urls.b;
+  document.getElementById("ra").textContent = "";
+  document.getElementById("rb").textContent = "";
+}
+document.querySelectorAll("[data-r]").forEach(b => b.addEventListener("click", () => {
+  const k = b.dataset.r;
+  document.getElementById("r" + k).textContent = urls[k];
+}));
+document.getElementById("apply").addEventListener("click", () => {
+  urls = { a: document.getElementById("ia").value.trim() || DEFAULT_A, b: document.getElementById("ib").value.trim() || DEFAULT_B };
+  App.save(KEY, urls); renderAll();
+});
+document.getElementById("swap").addEventListener("click", () => {
+  urls = { a: urls.b, b: urls.a }; App.save(KEY, urls); renderAll();
+});
+renderAll();
+</script>
+</body>
+</html>

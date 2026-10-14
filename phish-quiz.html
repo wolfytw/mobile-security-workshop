@@ -1,0 +1,56 @@
+<!doctype html>
+<html lang="zh-Hant-TW">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>釣魚網址測驗</title>
+<link rel="icon" href="data:image/svg+xml,%3Csvg xmlns=%22http://www.w3.org/2000/svg%22 viewBox=%220 0 100 100%22%3E%3Ctext y=%22.9em%22 font-size=%2290%22%3E%F0%9F%9B%A1%EF%B8%8F%3C/text%3E%3C/svg%3E">
+<link rel="stylesheet" href="assets/style.css">
+<script src="assets/common.js"></script>
+<script src="assets/urltools.js"></script>
+<script src="assets/quiz.js"></script>
+</head>
+<body data-unit="2">
+<main class="wrap">
+  <span class="tag">單元 02 · 學員實作</span>
+  <h1>釣魚網址測驗</h1>
+  <p class="lead">每一題都是你可能在簡訊、LINE 或 QR Code 裡看到的網址。用口訣<b>「由右往左讀，找到真正的家」</b>判斷：可信，還是可疑？</p>
+  <div id="quiz"></div>
+</main>
+<script>
+const Q = [
+  { q: "你自己在瀏覽器輸入銀行官網，網址列顯示：", code: "https://www.cathaybk.com.tw/cathaybk/",
+    url: "https://www.cathaybk.com.tw/cathaybk/", options: ["可信", "可疑"], answer: 0,
+    explain: "主網域是 cathaybk.com.tw（.com.tw 是一組結尾），是國泰世華的官方網域，而且是你自己輸入的。" },
+  { q: "簡訊說「帳戶異常，請立即驗證」，附上連結：", code: "https://cathaybk-secure.login-verify.cc/",
+    url: "https://cathaybk-secure.login-verify.cc/", options: ["可信", "可疑"], answer: 1,
+    explain: "真正的家是 login-verify.cc。cathaybk-secure 只是子網域，誰都可以隨便取。" },
+  { q: "「包裹地址不完整，請補繳 30 元運費」，連結是：", code: "https://www.post.gov.tw.parcel-fee.top/pay",
+    url: "https://www.post.gov.tw.parcel-fee.top/pay", options: ["可信", "可疑"], answer: 1,
+    explain: "最右邊是 .top，真正的家是 parcel-fee.top。前面的 www.post.gov.tw 全是偽裝。" },
+  { q: "同事傳來 165 反詐騙網站的連結：", code: "https://165.npa.gov.tw/",
+    url: "https://165.npa.gov.tw/", options: ["可信", "可疑"], answer: 0,
+    explain: "主網域是 npa.gov.tw（內政部警政署），.gov.tw 是政府機關專用結尾。" },
+  { q: "「momo 訂單異常，請重新確認付款」：", code: "https://www.rnomoshop.com.tw/order",
+    url: "https://www.rnomoshop.com.tw/order", options: ["可信", "可疑"], answer: 1,
+    explain: "仔細看：是 r + n（rnomoshop），不是 m（momoshop）。手機字小，這種長得像的字最容易被騙。" },
+  { q: "登入 Gmail 時跳出的頁面：", code: "https://accounts.google.com/signin",
+    url: "https://accounts.google.com/signin", options: ["可信", "可疑"], answer: 0,
+    explain: "主網域是 google.com，accounts 是 Google 自己的子網域。" },
+  { q: "「您的 Apple ID 已被鎖定」，連結是：", code: "https://appleid.apple.com.verify-id.co/",
+    url: "https://appleid.apple.com.verify-id.co/", options: ["可信", "可疑"], answer: 1,
+    explain: "最右邊是 .co，真正的家是 verify-id.co。appleid.apple.com 被放在前面當子網域偽裝。" },
+  { q: "簡訊裡只有一個短網址：", code: "https://reurl.cc/Xk82pQ",
+    url: "https://reurl.cc/Xk82pQ", options: ["可信", "可疑"], answer: 1,
+    explain: "短網址看不出真正去向，正牌銀行和政府機關的通知也不該要你點短網址。看不出去向就當可疑，改從官方管道確認。" },
+  { q: "報稅季時，你自己搜尋並確認後打開的網址：", code: "https://etax.nat.gov.tw/",
+    url: "https://etax.nat.gov.tw/", options: ["可信", "可疑"], answer: 0,
+    explain: "主網域是 nat.gov.tw，是財政部電子申報繳稅服務網。" },
+  { q: "這個網址開頭看起來是銀行官網：", code: "https://www.cathaybk.com.tw@evil.ru/login",
+    url: "https://www.cathaybk.com.tw@evil.ru/login", options: ["可信", "可疑"], answer: 1,
+    explain: "網址裡有「@」：瀏覽器會忽略 @ 前面的字，真正連去的是 evil.ru。" },
+];
+Quiz.mount(document.getElementById("quiz"), Q, { shuffle: true });
+</script>
+</body>
+</html>
